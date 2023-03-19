@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zajecia/functions/file_operations.dart';
+import 'package:data_table_2/data_table_2.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
 
@@ -43,10 +44,11 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 100,),
             TextField(
               controller: textController,
               maxLines: 8,
-              decoration: InputDecoration.collapsed(hintText: 'Write something here'),
+              decoration: const InputDecoration.collapsed(hintText: 'Write something here'),
             ),
             Container(
               height: 40,
@@ -55,7 +57,7 @@ class _MainScreenState extends State<MainScreen> {
                 scrollDirection: Axis.horizontal,
                 shrinkWrap: true,
                 children: [
-                  SizedBox(width: 20,),
+                  const SizedBox(width: 20,),
                   ElevatedButton(
                       onPressed: () async{
                         await file.write(textController.text);
@@ -64,20 +66,19 @@ class _MainScreenState extends State<MainScreen> {
                           text="";
                         });
                   },
-                      child: Text('Add to text file')),
-                  SizedBox(width: 20,),
+                      child: const Text('Add to text file')),
+                  const SizedBox(width: 20,),
                   ElevatedButton(
                       onPressed: () async{
                         data=<String>[];
                         dataPom=<String>[];
                         zmienna=0;
                         text=await file.read();
-                        print('done');
                         final seperator=text.split(';');
                         seperator.forEach((element) {
                           if(zmienna>14) {
                             data.add('-----------------------------------------------------------');
-                            dataPom.add('123');
+                            //dataPom.add('123');
                             zmienna = 0;
                           }
                           if(zmienna==0){
@@ -94,37 +95,37 @@ class _MainScreenState extends State<MainScreen> {
                           dataPom.add(element);
                           zmienna++;
                         });
-                        for(int i=0;i<data.length;i++)
+                        for(int i=0;i<dataPom.length;i++)
                           if(dataPom[i].isEmpty) {
-                            data[i] += ' brak';
+                            dataPom[i] += 'brak';
                           }
                         setState(() {});
                   },
-                      child: Text('Show text file')),
-                  SizedBox(width: 20,),
+                      child: const Text('Show text file')),
+                  const SizedBox(width: 20,),
                   ElevatedButton(
                       onPressed: (){
                         setState(() {
                           text="";
                           textController.clear();
                         });
-                  }, child: Text('Clear text area')),
-                  SizedBox(width: 20,),
+                  }, child: const Text('Clear text area')),
+                  const SizedBox(width: 20,),
                   ElevatedButton(
                       onPressed: () async{
                         text=await file.read();
                         setState(() {
                           textController.text=text;
                         });
-                      }, child: Text('Modify text file')),
-                  SizedBox(width: 20,),
+                      }, child: const Text('Modify text file')),
+                  const SizedBox(width: 20,),
                 ],
               ),
             ),
             Container(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height/2,
-              child: ListView(
+             /* child: ListView(
                 children: [
                   for(int i=0;i<data.length-1;i++)
                     Text(data[i]),
@@ -132,6 +133,42 @@ class _MainScreenState extends State<MainScreen> {
                         Text('${company[i]}: ${companyApp[i]}'),
                 ],
 
+              ), */
+
+              child: DataTable2(
+                columnSpacing: 12,
+                horizontalMargin: 12,
+                minWidth: 2000,
+                columns: List<DataColumn2>.generate(opis.length, (index) =>
+                    DataColumn2(size: ColumnSize.L,
+                    label: Text(opis[index]))),
+                rows: List<DataRow>.generate(
+                    (dataPom.length-1)~/15,
+                        (index) => DataRow(cells: [
+                          DataCell(Text(dataPom[index*15].toString())),
+                          DataCell(Text(dataPom[index*15+1].toString())),
+                          DataCell(Text(dataPom[index*15+2].toString())),
+                          DataCell(Text(dataPom[index*15+3].toString())),
+                          DataCell(Text(dataPom[index*15+4].toString())),
+                          DataCell(Text(dataPom[index*15+5].toString())),
+                          DataCell(Text(dataPom[index*15+6].toString())),
+                          DataCell(Text(dataPom[index*15+7].toString())),
+                          DataCell(Text(dataPom[index*15+8].toString())),
+                          DataCell(Text(dataPom[index*15+9].toString())),
+                          DataCell(Text(dataPom[index*15+10].toString())),
+                          DataCell(Text(dataPom[index*15+11].toString())),
+                          DataCell(Text(dataPom[index*15+12].toString())),
+                          DataCell(Text(dataPom[index*15+13].toString())),
+                          DataCell(Text(dataPom[index*15+14].toString())),
+                    ])),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                children: [
+                  for(int i=0;i<company.length-1;i++)
+                    Text('${company[i]}: ${companyApp[i]}'),
+                ],
               ),
             ),
           ],
