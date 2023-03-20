@@ -17,6 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   List<int> companyApp=<int>[];
   int zmienna=0;
   String text="";
+  List<TextEditingController> controllersList=<TextEditingController>[];
   final List<String> opis=[
     'Model',
     'Liczba',
@@ -61,7 +62,6 @@ class _MainScreenState extends State<MainScreen> {
                   ElevatedButton(
                       onPressed: () async{
                         await file.write(textController.text);
-                        print(textController.text);
                         setState(() {
                           text="";
                         });
@@ -74,32 +74,42 @@ class _MainScreenState extends State<MainScreen> {
                         dataPom=<String>[];
                         zmienna=0;
                         text=await file.read();
+                        print(text);
                         final seperator=text.split(';');
-                        seperator.forEach((element) {
+                        for (var element in seperator) {
                           if(zmienna>14) {
-                            data.add('-----------------------------------------------------------');
-                            //dataPom.add('123');
                             zmienna = 0;
                           }
+                          //print(element);
                           if(zmienna==0){
-                            if(company.contains(element)){
-                              int help=company.indexOf(element);
+                            print('wha');
+                            if(element=='Dell'){
+                              print(company.length);
+                            }
+                            if(company.contains(element.trim())){
+                              int help=company.indexOf(element.trim());
                               companyApp[help]+=1;
                             }
                             else{
-                              company.add(element);
+                              company.add(element.trim());
                               companyApp.add(1);
                             }
                           }
                           data.add('${opis[zmienna]}: ${element}');
                           dataPom.add(element);
                           zmienna++;
-                        });
-                        for(int i=0;i<dataPom.length;i++)
+                        }
+                        for(int i=0;i<dataPom.length;i++) {
+                          controllersList.add(TextEditingController());
                           if(dataPom[i].isEmpty) {
                             dataPom[i] += 'brak';
                           }
-                        setState(() {});
+                          controllersList[i].text=dataPom[i];
+                          //print(controllersList[i].text);
+                        }
+                        setState(() {
+                          //controllersList[15].text+='gg';
+                        });
                   },
                       child: const Text('Show text file')),
                   const SizedBox(width: 20,),
@@ -138,28 +148,28 @@ class _MainScreenState extends State<MainScreen> {
               child: DataTable2(
                 columnSpacing: 12,
                 horizontalMargin: 12,
-                minWidth: 2000,
+                minWidth: 3600,
                 columns: List<DataColumn2>.generate(opis.length, (index) =>
                     DataColumn2(size: ColumnSize.L,
                     label: Text(opis[index]))),
                 rows: List<DataRow>.generate(
                     (dataPom.length-1)~/15,
                         (index) => DataRow(cells: [
-                          DataCell(Text(dataPom[index*15].toString())),
-                          DataCell(Text(dataPom[index*15+1].toString())),
-                          DataCell(Text(dataPom[index*15+2].toString())),
-                          DataCell(Text(dataPom[index*15+3].toString())),
-                          DataCell(Text(dataPom[index*15+4].toString())),
-                          DataCell(Text(dataPom[index*15+5].toString())),
-                          DataCell(Text(dataPom[index*15+6].toString())),
-                          DataCell(Text(dataPom[index*15+7].toString())),
-                          DataCell(Text(dataPom[index*15+8].toString())),
-                          DataCell(Text(dataPom[index*15+9].toString())),
-                          DataCell(Text(dataPom[index*15+10].toString())),
-                          DataCell(Text(dataPom[index*15+11].toString())),
-                          DataCell(Text(dataPom[index*15+12].toString())),
-                          DataCell(Text(dataPom[index*15+13].toString())),
-                          DataCell(Text(dataPom[index*15+14].toString())),
+                          DataCell(TextFormField(controller: controllersList[index*15],)),
+                          DataCell(TextField(controller: controllersList[index*15+1],)),
+                          DataCell(TextField(controller: controllersList[index*15+2],)),
+                          DataCell(TextField(controller: controllersList[index*15+3],)),
+                          DataCell(TextField(controller: controllersList[index*15+4],)),
+                          DataCell(TextField(controller: controllersList[index*15+5],)),
+                          DataCell(TextField(controller: controllersList[index*15+6],)),
+                          DataCell(TextField(controller: controllersList[index*15+7],)),
+                          DataCell(TextField(controller: controllersList[index*15+8],)),
+                          DataCell(TextField(controller: controllersList[index*15+9],)),
+                          DataCell(TextField(controller: controllersList[index*15+10],)),
+                          DataCell(TextField(controller: controllersList[index*15+11],)),
+                          DataCell(TextField(controller: controllersList[index*15+12],)),
+                          DataCell(TextField(controller: controllersList[index*15+13],)),
+                          DataCell(TextField(controller: controllersList[index*15+14],)),
                     ])),
               ),
             ),
