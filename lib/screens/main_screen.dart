@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:xml/xml.dart';
 import 'package:zajecia/functions/file_operations.dart';
 import 'package:data_table_2/data_table_2.dart';
+import 'package:zajecia/functions/xml_operations.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
 
@@ -11,6 +13,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final textController = TextEditingController();
   final FileOperations file=FileOperations();
+  final XmlOperations xml=XmlOperations();
   List<String> data=<String>[];
   List<String> dataPom=<String>[];
   List<String> company=<String>[];
@@ -28,11 +31,11 @@ class _MainScreenState extends State<MainScreen> {
     'Rdzenie',
     'Liczba',
     'Pamiec',
-    'Pamiec 2',
+    'Pamiec_2',
     'Dysk',
     'Grafika',
-    'Pamiec 3',
-    'System operacyjny',
+    'Pamiec_3',
+    'System_operacyjny',
     'DVD'
   ];
   @override
@@ -74,7 +77,7 @@ class _MainScreenState extends State<MainScreen> {
                         dataPom=<String>[];
                         zmienna=0;
                         text=await file.read();
-                        print(text);
+                        text=text.replaceAll(RegExp(r"\r\n|\n|\r"), "");
                         final seperator=text.split(';');
                         for (var element in seperator) {
                           if(zmienna>14) {
@@ -82,10 +85,6 @@ class _MainScreenState extends State<MainScreen> {
                           }
                           //print(element);
                           if(zmienna==0){
-                            print('wha');
-                            if(element=='Dell'){
-                              print(company.length);
-                            }
                             if(company.contains(element.trim())){
                               int help=company.indexOf(element.trim());
                               companyApp[help]+=1;
@@ -105,10 +104,8 @@ class _MainScreenState extends State<MainScreen> {
                             dataPom[i] += 'brak';
                           }
                           controllersList[i].text=dataPom[i];
-                          //print(controllersList[i].text);
                         }
                         setState(() {
-                          //controllersList[15].text+='gg';
                         });
                   },
                       child: const Text('Show text file')),
@@ -128,6 +125,34 @@ class _MainScreenState extends State<MainScreen> {
                           textController.text=text;
                         });
                       }, child: const Text('Modify text file')),
+                  const SizedBox(width: 20,),
+                  ElevatedButton(
+                      onPressed: (){
+
+                        setState(() {
+                          
+                        });
+                      }, child: const Text('Get from xml')),
+                  const SizedBox(width: 20,),
+                  ElevatedButton(
+                      onPressed: () async {
+                        final builder = XmlBuilder();
+                        builder.processing('xml', 'version="1.0"');
+                        builder.element('Laptopy', nest: ()
+                        {
+                          for (int i = 0; i < (dataPom.length - 1)/15; i++) {
+                            builder.element('Laptop', nest: (){
+                              for(int j=0;j<opis.length;j++){
+                                builder.element(opis[j], nest: controllersList[i*15+j].text);
+                              }
+                            });
+                          }
+                        }
+                        );
+                        final document=builder.buildDocument();
+                        print(document.toXmlString(pretty: true, indent: '\t'));
+                        await xml.write(document);
+                      }, child: const Text('Save to xml')),
                   const SizedBox(width: 20,),
                 ],
               ),
