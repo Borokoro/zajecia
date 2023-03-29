@@ -24,6 +24,7 @@ class XmlOperations{
       document=XmlDocument();
       text="Couldn't read file";
     }
+    print(document);
     return document;
   }
 

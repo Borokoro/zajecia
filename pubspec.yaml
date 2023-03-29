@@ -37,11 +37,15 @@ dependencies:
   cupertino_icons: ^1.0.2
   path_provider: ^2.0.13
   data_table_2: any
-  xml: ^6.2.2
+  xml: any
+  flutter_app_name: ^0.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter_app_name:
+  name: "My Cool App"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
