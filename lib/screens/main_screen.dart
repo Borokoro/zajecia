@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:motion_toast/motion_toast.dart';
 import 'package:xml/xml.dart';
 import 'package:zajecia/functions/buttons.dart';
 import 'package:zajecia/functions/file_operations.dart';
@@ -24,6 +25,7 @@ class _MainScreenState extends State<MainScreen> {
   String text = "";
   List<TextEditingController> controllersList = <TextEditingController>[];
   bool areThereData = false;
+  bool isValidated=true;
   final List<String> opis = [
     'Producent',
     'Wielkość_matrycy',
@@ -74,9 +76,30 @@ class _MainScreenState extends State<MainScreen> {
                         text = "";
                         for (int i = 0; i < controllersList.length; i++) {
                           text = text + controllersList[i].text + ';';
+                          if(controllersList[i].text.length<2 && i%15!=6){
+                            print(controllersList[i].text);
+                            isValidated=false;
+                          }
+                          if(i%15==6 || i%15==7){
+                            try{
+                              int.parse(controllersList[i].text);
+                            }
+                            catch (e){
+                              if(controllersList[i].text.trim()!='brak') {
+                                //print(controllersList[i].text);
+                                isValidated = false;
+                              }
+                            }
+                          }
                         }
-                        print(text);
-                        await file.write(text);
+                        if(isValidated==false){
+                          MotionToast.warning(title:  Text("Warning Motion Toast"),
+                              description:  Text('Nieudana walidacja')).show(context);
+                          isValidated=true;
+                        }
+                        else {
+                          await file.write(text);
+                        }
                         setState(() {
                           text = "";
                         });
@@ -131,6 +154,7 @@ class _MainScreenState extends State<MainScreen> {
                         zmienna=0;
                         controllersList=<TextEditingController>[];
                         data = <String>[];
+
                         final seperator = xmlAsString.split(';');
                         for (var element in seperator) {
                           if (zmienna > 14) {
@@ -163,89 +187,107 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   ElevatedButton(
                       onPressed: () async {
-                        final builder = XmlBuilder();
-                        DateTime dateTime=DateTime.now();
-                        builder.processing(
-                            'laptopy', 'moddate="${dateTime}"');
-                        builder.element('Laptopy', nest: () {
-                          for (int i = 0; i < (data.length - 1) ~/ 15; i++) {
-                            builder.element('Laptop', nest: () {
-                              builder.attribute('id', i+1);
-                              for (int j = 0; j < opis.length; j++) {
-                                if (j == 0) {
-                                  builder.element(opis[j],
-                                      nest: controllersList[i * 15 + j].text);
-                                } else if (j == 1) {
-                                  builder.element(
-                                      'screen',
-                                      nest: () {
-                                    for (int k = 0; k < 4; k++) {
-                                      builder.element(opis[j],nest: (){
-                                        builder.text(controllersList[j+i*15].text);
-                                      });
-                                      j++;
-                                    }
-                                    j--;
-                                  });
-                                }
-                                else if(j==5){
-                                  builder.element(
-                                      'procesor',
-                                      nest: () {
-                                        for(int k=0;k<3;k++){
-                                          builder.element(opis[j], nest: () {
-                                            builder.text(controllersList[j+i*15].text);
-                                          });
-                                          j++;
-                                        }
-                                      });
-                                  j--;
-                                }
-                                else if(j==8){
-                                  builder.element(opis[j] ,nest: () {
-                                    builder.text(controllersList[j+i*15].text);
-                                  });
-                                }
-                                else if(j==9){
-                                  builder.element(
-                                      'dysk',
-                                      nest: () {
-                                        builder.element(opis[j],nest: (){
-                                          builder.text(controllersList[j+i*15].text);
+                        text = "";
+                        for (int i = 0; i < controllersList.length; i++) {
+                          text = text + controllersList[i].text + ';';
+                          if(controllersList[i].text.length<2 && i%15!=6){
+                            print(controllersList[i].text);
+                            isValidated=false;
+                          }
+                          if(i%15==6 || i%15==7){
+                            try{
+                              int.parse(controllersList[i].text);
+                            }
+                            catch (e){
+                              if(controllersList[i].text.trim()!='brak') {
+                                //print(controllersList[i].text);
+                                isValidated = false;
+                              }
+                            }
+                          }
+                        }
+                        if(isValidated==false){
+                          MotionToast.warning(title:  Text("Warning Motion Toast"),
+                              description:  Text('Nieudana walidacja')).show(context);
+                          isValidated=true;
+                        }
+                        else {
+                          final builder = XmlBuilder();
+                          DateTime dateTime = DateTime.now();
+                          builder.processing(
+                              'laptopy', 'moddate="${dateTime}"');
+                          builder.element('Laptopy', nest: () {
+                            for (int i = 0; i < (data.length - 1) ~/ 15; i++) {
+                              builder.element('Laptop', nest: () {
+                                builder.attribute('id', i + 1);
+                                for (int j = 0; j < opis.length; j++) {
+                                  if (j == 0) {
+                                    builder.element(opis[j],
+                                        nest: controllersList[i * 15 + j].text);
+                                  } else if (j == 1) {
+                                    builder.element('screen', nest: () {
+                                      for (int k = 0; k < 3; k++) {
+                                        builder.element(opis[j], nest: () {
+                                          builder.text(
+                                              controllersList[j + i * 15].text);
                                         });
                                         j++;
-                                        builder.element(opis[j],nest: (){
-                                          builder.text(controllersList[j+i*15].text);
+                                      }
+                                      builder.attribute(opis[j],
+                                          controllersList[j + i * 15].text);
+                                    });
+                                  } else if (j == 5) {
+                                    builder.element('procesor', nest: () {
+                                      for (int k = 0; k < 3; k++) {
+                                        builder.element(opis[j], nest: () {
+                                          builder.text(
+                                              controllersList[j + i * 15].text);
                                         });
+                                        j++;
+                                      }
+                                    });
+                                    j--;
+                                  } else if (j == 8) {
+                                    builder.element(opis[j], nest: () {
+                                      builder.text(
+                                          controllersList[j + i * 15].text);
+                                    });
+                                  } else if (j == 9) {
+                                    builder.element('dysk', nest: () {
+                                      builder.element(opis[j], nest: () {
+                                        builder.text(
+                                            controllersList[j + i * 15].text);
                                       });
-                                }
-                                else if(j==11){
-                                  builder.element(
-                                      '${opis[j]}',
-                                      nest: () {
-                                        for(int k=0;k<2;k++) {
-                                          builder.element(opis[j], nest: (){
-                                              builder.text(controllersList[j + i * 15].text);
-                                          });
                                       j++;
-                                    }
-                                        j--;
-                                  });
+                                      builder.attribute(opis[j],
+                                          controllersList[j + i * 15].text);
+                                    });
+                                  } else if (j == 11) {
+                                    builder.element('${opis[j]}', nest: () {
+                                      for (int k = 0; k < 2; k++) {
+                                        builder.element(opis[j], nest: () {
+                                          builder.text(
+                                              controllersList[j + i * 15].text);
+                                        });
+                                        j++;
+                                      }
+                                      j--;
+                                    });
+                                  } else if (j == 13 || j == 14) {
+                                    builder.element('${opis[j]}', nest: () {
+                                      builder.text(
+                                          controllersList[j + i * 15].text);
+                                    });
+                                  }
                                 }
-                                else if(j==13 || j==14){
-                                  builder.element(
-                                      '${opis[j]}',
-                                      nest: () {
-                                        builder.text(controllersList[j+i*15].text);
-                                      });
-                                }
-                              }
-                            });
-                          }
-                        });
-                        final document = builder.buildDocument();
-                        print(document.toXmlString(pretty: true, indent: '\t'));
-                        await xml.write(document);
+                              });
+                            }
+                          });
+                          final document = builder.buildDocument();
+                          print(
+                              document.toXmlString(pretty: true, indent: '\t'));
+                          await xml.write(document);
+                        }
                       },
                       child: const Text('Zapisz dane do XML')),
                   const SizedBox(

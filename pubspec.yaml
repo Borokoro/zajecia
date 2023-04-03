@@ -39,6 +39,7 @@ dependencies:
   data_table_2: any
   xml: any
   flutter_app_name: ^0.1.1
+  motion_toast: ^2.6.6
 
 dev_dependencies:
   flutter_test:
