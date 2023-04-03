@@ -7,7 +7,6 @@ class FileOperations{
   write(String text) async{
     final Directory directory = await getApplicationDocumentsDirectory();
     final File file = File('${directory.path}/data.txt');
-    print(directory.path);
     await file.writeAsString(text);
   }
 
