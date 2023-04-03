@@ -26,20 +26,20 @@ class _MainScreenState extends State<MainScreen> {
   bool areThereData = false;
   final List<String> opis = [
     'Producent',
-    'Wielkość matrycy',
+    'Wielkość_matrycy',
     'Rozdzielczość',
-    'Typ matrycy',
+    'Typ_matrycy',
     'Dotykowy',
     'Procesor',
-    'Liczba rdzeni fizycznych',
+    'Liczba_rdzeni_fizycznych',
     'Taktowanie',
     'RAM',
-    'Pojemnosc dysku',
-    'Typ dysku',
-    'Karta graficzna',
-    'Pamięć karty graficznej',
-    'System operacyjny',
-    'Napęd optyczny'
+    'Pojemnosc_dysku',
+    'Typ_dysku',
+    'Karta_graficzna',
+    'Pamięć_karty_graficznej',
+    'System_operacyjny',
+    'Napęd_optyczny'
   ];
   @override
   void initState() {
@@ -88,6 +88,7 @@ class _MainScreenState extends State<MainScreen> {
                   ElevatedButton(
                       onPressed: () async {
                         data = <String>[];
+                        controllersList=<TextEditingController>[];
                         zmienna = 0;
                         text = await file.read();
                         text = text.replaceAll(RegExp(r"\r\n|\n|\r"), "");
@@ -124,9 +125,36 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   ElevatedButton(
                       onPressed: () async {
+                        String xmlAsString;
                         areThereData = true;
-                        XmlDocument document;
-                        document = await xml.read();
+                        xmlAsString = await xml.read();
+                        zmienna=0;
+                        controllersList=<TextEditingController>[];
+                        data = <String>[];
+                        final seperator = xmlAsString.split(';');
+                        for (var element in seperator) {
+                          if (zmienna > 14) {
+                            zmienna = 0;
+                          }
+                          if (zmienna == 0) {
+                            if (company.contains(element.trim())) {
+                              int help = company.indexOf(element.trim());
+                              companyApp[help] += 1;
+                            } else {
+                              company.add(element.trim());
+                              companyApp.add(1);
+                            }
+                          }
+                          data.add(element);
+                          zmienna++;
+                        }
+                        for (int i = 0; i < data.length; i++) {
+                          controllersList.add(TextEditingController());
+                          if (data[i].isEmpty) {
+                            data[i] += 'brak';
+                          }
+                          controllersList[i].text = data[i];
+                        }
                         setState(() {});
                       },
                       child: const Text('Wczytaj dane z pliku xml')),
@@ -140,20 +168,25 @@ class _MainScreenState extends State<MainScreen> {
                             'lsptops', 'moddate="2015-10-30 T 10:15');
                         builder.element('Laptopy', nest: () {
                           for (int i = 0; i < (data.length - 1) ~/ 15; i++) {
-                            builder.element('Laptop id=${i + 1}', nest: () {
+                            builder.element('Laptop', nest: () {
+                              builder.attribute('id', i+1);
                               for (int j = 0; j < opis.length; j++) {
                                 if (j == 0) {
                                   builder.element(opis[j],
                                       nest: controllersList[i * 15 + j].text);
                                 } else if (j == 1) {
                                   builder.element(
-                                      '${opis[j + 3]}=${controllersList[i + 3].text}',
+                                      'screen',
                                       nest: () {
                                     for (int k = 0; k < 3; k++) {
-                                      builder.attribute(
-                                          opis[j], controllersList[j+i*15].text);
+                                      builder.element(opis[j],nest: (){
+                                        builder.text(controllersList[j+i*15].text);
+                                      });
                                       j++;
                                     }
+                                    builder.attribute(
+                                        opis[j], controllersList[j+i*15].text);
+
                                   });
                                 }
                                 else if(j==5){
@@ -161,18 +194,24 @@ class _MainScreenState extends State<MainScreen> {
                                       'procesor',
                                       nest: () {
                                         for(int k=0;k<3;k++){
-                                          builder.attribute(opis[j], controllersList[j+i*15].text);
+                                          builder.element(opis[j], nest: () {
+                                            builder.text(controllersList[j+i*15].text);
+                                          });
                                           j++;
                                         }
                                       });
+                                  j--;
                                 }
                                 else if(j==8){
-                                  builder.attribute(opis[j], controllersList[j+i*15].text);
+                                  builder.element(opis[j] ,nest: () {
+                                    builder.text(controllersList[j+i*15].text);
+                                  });
                                 }
                                 else if(j==9){
                                   builder.element(
-                                      '${opis[j]}=${controllersList[j+i*15].text}',
+                                      'dysk',
                                       nest: () {
+                                        builder.text(controllersList[j+i*15].text);
                                         j++;
                                         builder.attribute(opis[j], controllersList[j+i*15].text);
                                       });
@@ -182,8 +221,9 @@ class _MainScreenState extends State<MainScreen> {
                                       '${opis[j]}',
                                       nest: () {
                                         for(int k=0;k<2;k++) {
-                                      builder.attribute(
-                                          opis[j], controllersList[j + i * 15].text);
+                                          builder.element(opis[j], nest: (){
+                                              builder.text(controllersList[j + i * 15].text);
+                                          });
                                       j++;
                                     }
                                   });
