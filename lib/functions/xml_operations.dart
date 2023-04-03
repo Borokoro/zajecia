@@ -22,8 +22,11 @@ class XmlOperations{
       final Directory directory = await getApplicationDocumentsDirectory();
       final File file = File('${directory.path}/data_xml.xml');
       await file.openRead().transform(utf8.decoder).toXmlEvents()
-      .forEachEvent(onText: (event) {
-           print(event);
+      .normalizeEvents().forEachEvent(onText: (event) {
+            node=event.text.replaceAll(new RegExp(r"\s+"), "");
+            if(node!=""){
+              text=text+node+";";
+            }
       });
       print('zczytalo');
       print(text);

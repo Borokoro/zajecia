@@ -164,8 +164,9 @@ class _MainScreenState extends State<MainScreen> {
                   ElevatedButton(
                       onPressed: () async {
                         final builder = XmlBuilder();
+                        DateTime dateTime=DateTime.now();
                         builder.processing(
-                            'lsptops', 'moddate="2015-10-30 T 10:15');
+                            'laptopy', 'moddate="${dateTime}"');
                         builder.element('Laptopy', nest: () {
                           for (int i = 0; i < (data.length - 1) ~/ 15; i++) {
                             builder.element('Laptop', nest: () {
@@ -178,15 +179,13 @@ class _MainScreenState extends State<MainScreen> {
                                   builder.element(
                                       'screen',
                                       nest: () {
-                                    for (int k = 0; k < 3; k++) {
+                                    for (int k = 0; k < 4; k++) {
                                       builder.element(opis[j],nest: (){
                                         builder.text(controllersList[j+i*15].text);
                                       });
                                       j++;
                                     }
-                                    builder.attribute(
-                                        opis[j], controllersList[j+i*15].text);
-
+                                    j--;
                                   });
                                 }
                                 else if(j==5){
@@ -211,9 +210,13 @@ class _MainScreenState extends State<MainScreen> {
                                   builder.element(
                                       'dysk',
                                       nest: () {
-                                        builder.text(controllersList[j+i*15].text);
+                                        builder.element(opis[j],nest: (){
+                                          builder.text(controllersList[j+i*15].text);
+                                        });
                                         j++;
-                                        builder.attribute(opis[j], controllersList[j+i*15].text);
+                                        builder.element(opis[j],nest: (){
+                                          builder.text(controllersList[j+i*15].text);
+                                        });
                                       });
                                 }
                                 else if(j==11){
@@ -226,6 +229,7 @@ class _MainScreenState extends State<MainScreen> {
                                           });
                                       j++;
                                     }
+                                        j--;
                                   });
                                 }
                                 else if(j==13 || j==14){
