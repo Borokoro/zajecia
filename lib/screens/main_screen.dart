@@ -5,6 +5,7 @@ import 'package:zajecia/functions/buttons.dart';
 import 'package:zajecia/functions/file_operations.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:zajecia/functions/xml_operations.dart';
+import 'package:zajecia/mySQL/mySQL.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -21,11 +22,17 @@ class _MainScreenState extends State<MainScreen> {
   List<String> data = <String>[];
   List<String> company = <String>[];
   List<int> companyApp = <int>[];
+  List<String> textDuplicates=[];
+  List<String> xmlDuplicates=[];
+  List<String> databaseDuplicates=[];
+  List<int> red=[];
+  List<bool> isWhite=[];
   int zmienna = 0;
   String text = "";
   List<TextEditingController> controllersList = <TextEditingController>[];
   bool areThereData = false;
-  bool isValidated=true;
+  bool isValidated = true;
+  final MySQL mySQL = MySQL();
   final List<String> opis = [
     'Producent',
     'Wielkość_matrycy',
@@ -45,6 +52,7 @@ class _MainScreenState extends State<MainScreen> {
   ];
   @override
   void initState() {
+    mySQL.establishConnection().then((value) => mySQL.createTable());
     super.initState();
   }
 
@@ -76,28 +84,29 @@ class _MainScreenState extends State<MainScreen> {
                         text = "";
                         for (int i = 0; i < controllersList.length; i++) {
                           text = text + controllersList[i].text + ';';
-                          if(controllersList[i].text.length<2 && i%15!=6){
+                          if (controllersList[i].text.length < 2 &&
+                              i % 15 != 6) {
                             print(controllersList[i].text);
-                            isValidated=false;
+                            isValidated = false;
                           }
-                          if(i%15==6 || i%15==7){
-                            try{
+                          if (i % 15 == 6 || i % 15 == 7) {
+                            try {
                               int.parse(controllersList[i].text);
-                            }
-                            catch (e){
-                              if(controllersList[i].text.trim()!='brak') {
+                            } catch (e) {
+                              if (controllersList[i].text.trim() != 'brak') {
                                 //print(controllersList[i].text);
                                 isValidated = false;
                               }
                             }
                           }
                         }
-                        if(isValidated==false){
-                          MotionToast.warning(title:  Text("Warning Motion Toast"),
-                              description:  Text('Nieudana walidacja')).show(context);
-                          isValidated=true;
-                        }
-                        else {
+                        if (isValidated == false) {
+                          MotionToast.warning(
+                                  title: Text("Warning Motion Toast"),
+                                  description: Text('Nieudana walidacja'))
+                              .show(context);
+                          isValidated = true;
+                        } else {
                           await file.write(text);
                         }
                         setState(() {
@@ -111,7 +120,9 @@ class _MainScreenState extends State<MainScreen> {
                   ElevatedButton(
                       onPressed: () async {
                         data = <String>[];
-                        controllersList=<TextEditingController>[];
+                        red=[];
+                        isWhite=[];
+                        controllersList = <TextEditingController>[];
                         zmienna = 0;
                         text = await file.read();
                         text = text.replaceAll(RegExp(r"\r\n|\n|\r"), "");
@@ -132,12 +143,50 @@ class _MainScreenState extends State<MainScreen> {
                           data.add(element);
                           zmienna++;
                         }
+                        textDuplicates=[];
                         for (int i = 0; i < data.length; i++) {
                           controllersList.add(TextEditingController());
                           if (data[i].isEmpty) {
                             data[i] += 'brak';
                           }
                           controllersList[i].text = data[i];
+                          textDuplicates.add(data[i]);
+                        }
+                        for(int i=0; i<data.length~/15;i++){
+                          isWhite.add(false);
+                        }
+                        if(xmlDuplicates.isNotEmpty) {
+                          bool match=true;
+                          for (int i = 0; i < xmlDuplicates.length; i += 15) {
+                            for(int j=0;j<15;j++){
+                              if(data[i]!=xmlDuplicates[i]){
+                                match=false;
+                                break;
+                              }
+                            }
+                            if(match){
+                              red.add(i);
+                            }
+                            match=true;
+                          }
+                          xmlDuplicates=[];
+                        }
+                        else if(databaseDuplicates.isNotEmpty){
+                          bool match=true;
+                          print(data.length);
+                          for (int i = 0; i < databaseDuplicates.length; i += 15) {
+                            for(int j=0;j<15;j++){
+                              if(data[i]!=databaseDuplicates[i]){
+                                match=false;
+                                break;
+                              }
+                            }
+                            if(match){
+                              red.add(i);
+                            }
+                            match=true;
+                          }
+                          databaseDuplicates=[];
                         }
                         areThereData = true;
                         setState(() {});
@@ -148,11 +197,13 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   ElevatedButton(
                       onPressed: () async {
+                        red=[];
+                        isWhite=[];
                         String xmlAsString;
                         areThereData = true;
                         xmlAsString = await xml.read();
-                        zmienna=0;
-                        controllersList=<TextEditingController>[];
+                        zmienna = 0;
+                        controllersList = <TextEditingController>[];
                         data = <String>[];
 
                         final seperator = xmlAsString.split(';');
@@ -172,12 +223,50 @@ class _MainScreenState extends State<MainScreen> {
                           data.add(element);
                           zmienna++;
                         }
+                        for(int i=0; i<data.length~/15;i++){
+                          isWhite.add(false);
+                        }
+                        if(textDuplicates.isNotEmpty) {
+                          print(textDuplicates.length);
+                          print(data.length);
+                          bool match=true;
+                          for (int i = 0; i < data.length; i += 15) {
+                            for(int j=0;j<15;j++){
+                              if(data[i]!=textDuplicates[i]){
+                                match=false;
+                                break;
+                              }
+                            }
+                            if(match){
+                              red.add(i);
+                            }
+                            match=true;
+                          }
+                          textDuplicates=[];
+                        }
+                        else if(databaseDuplicates.isNotEmpty){
+                          bool match=true;
+                          for (int i = 0; i < databaseDuplicates.length; i += 15) {
+                            for(int j=0;j<15;j++){
+                              if(data[i]!=databaseDuplicates[i]){
+                                match=false;
+                                break;
+                              }
+                            }
+                            if(match){
+                              red.add(i);
+                            }
+                            match=true;
+                          }
+                          databaseDuplicates=[];
+                        }
                         for (int i = 0; i < data.length; i++) {
                           controllersList.add(TextEditingController());
                           if (data[i].isEmpty) {
                             data[i] += 'brak';
                           }
                           controllersList[i].text = data[i];
+                          xmlDuplicates.add(data[i]);
                         }
                         setState(() {});
                       },
@@ -190,28 +279,29 @@ class _MainScreenState extends State<MainScreen> {
                         text = "";
                         for (int i = 0; i < controllersList.length; i++) {
                           text = text + controllersList[i].text + ';';
-                          if(controllersList[i].text.length<2 && i%15!=6){
+                          if (controllersList[i].text.length < 2 &&
+                              i % 15 != 6) {
                             print(controllersList[i].text);
-                            isValidated=false;
+                            isValidated = false;
                           }
-                          if(i%15==6 || i%15==7){
-                            try{
+                          if (i % 15 == 6 || i % 15 == 7) {
+                            try {
                               int.parse(controllersList[i].text);
-                            }
-                            catch (e){
-                              if(controllersList[i].text.trim()!='brak') {
+                            } catch (e) {
+                              if (controllersList[i].text.trim() != 'brak') {
                                 //print(controllersList[i].text);
                                 isValidated = false;
                               }
                             }
                           }
                         }
-                        if(isValidated==false){
-                          MotionToast.warning(title:  Text("Warning Motion Toast"),
-                              description:  Text('Nieudana walidacja')).show(context);
-                          isValidated=true;
-                        }
-                        else {
+                        if (isValidated == false) {
+                          MotionToast.warning(
+                                  title: Text("Warning Motion Toast"),
+                                  description: Text('Nieudana walidacja'))
+                              .show(context);
+                          isValidated = true;
+                        } else {
                           final builder = XmlBuilder();
                           DateTime dateTime = DateTime.now();
                           builder.processing(
@@ -293,6 +383,96 @@ class _MainScreenState extends State<MainScreen> {
                   const SizedBox(
                     width: 20,
                   ),
+                  ElevatedButton(
+                      onPressed: () async {
+                        red=[];
+                        List<dynamic> result;
+                        result = await mySQL.getData();
+                        controllersList = [];
+                        data = [];
+                        for (int i = 0; i < result.length; i++) {
+                          controllersList.add(TextEditingController());
+                          controllersList[i].text = result[i];
+                          data.add(result[i].toString());
+                          databaseDuplicates.add(result[i]);
+                        }
+                        for(int i=0; i<data.length~/15;i++){
+                          isWhite.add(false);
+                        }
+                        if(xmlDuplicates.isNotEmpty) {
+                          bool match=true;
+                          for (int i = 0; i < data.length; i += 15) {
+                            for(int j=0;j<15;j++){
+                              if(data[i]!=xmlDuplicates[i]){
+                                match=false;
+                                break;
+                              }
+                            }
+                            if(match){
+                              red.add(i);
+                            }
+                            match=true;
+                          }
+                          xmlDuplicates=[];
+                        }
+                        else if(textDuplicates.isNotEmpty){
+                          bool match=true;
+                          for (int i = 0; i < data.length; i += 15) {
+                            for(int j=0;j<15;j++){
+                              if(data[i]!=textDuplicates[i]){
+                                match=false;
+                                break;
+                              }
+                            }
+                            if(match){
+                              red.add(i);
+                            }
+                            match=true;
+                          }
+                          textDuplicates=[];
+                        }
+                        data.add("");
+                        setState(() {
+                          print(red.length);
+                          areThereData = true;
+                        });
+                      },
+                      child: const Text('Import danych z bazy danych')),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  ElevatedButton(
+                      onPressed: () async {
+                        text = "";
+                        for (int i = 0; i < controllersList.length; i++) {
+                          text = text + controllersList[i].text + ';';
+                          if (controllersList[i].text.length < 2 &&
+                              i % 15 != 6) {
+                            print(controllersList[i].text);
+                            isValidated = false;
+                          }
+                          if (i % 15 == 6 || i % 15 == 7) {
+                            try {
+                              int.parse(controllersList[i].text);
+                            } catch (e) {
+                              if (controllersList[i].text.trim() != 'brak') {
+                                //print(controllersList[i].text);
+                                isValidated = false;
+                              }
+                            }
+                          }
+                        }
+                        if (isValidated == false) {
+                          MotionToast.warning(
+                                  title: Text("Warning Motion Toast"),
+                                  description: Text('Nieudana walidacja'))
+                              .show(context);
+                          isValidated = true;
+                        } else {
+                          await mySQL.insertData(controllersList);
+                        }
+                      },
+                      child: const Text('Eksport danych do bazy danych')),
                 ],
               ),
             ),
@@ -311,50 +491,221 @@ class _MainScreenState extends State<MainScreen> {
                       rows: List<DataRow>.generate(
                           (data.length - 1) ~/ 15,
                           (index) => DataRow(cells: [
-                                DataCell(TextFormField(
-                                  controller: controllersList[index * 15],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index]?  Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,
+                                    child: TextFormField(
+                                      controller: controllersList[index * 15],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15].text!=data[index*15]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 1],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,
+                                    child: TextField(
+                                      controller: controllersList[index * 15 + 1],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                      setState(() {
+                                        if(controllersList[index*15+1].text!=data[index*15+1]){
+                                          isWhite[index]=true;
+                                        }
+                                      });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 2],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 2],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+2].text!=data[index*15+2]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },)),
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 3],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+3].text!=data[index*15+3]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 3],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 4],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+4].text!=data[index*15+4]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 4],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 5],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+5].text!=data[index*15+5]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 5],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 6],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+6].text!=data[index*15+6]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 6],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 7],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+7].text!=data[index*15+7]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 7],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 8],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+8].text!=data[index*15+8]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 8],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller: controllersList[index * 15 + 9],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+9].text!=data[index*15+9]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 9],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller:
+                                          controllersList[index * 15 + 10],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+10].text!=data[index*15+10]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 10],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: isWhite[index] ? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller:
+                                          controllersList[index * 15 + 11],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+11].text!=data[index*15+11]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 11],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: controllersList[index*15].text!=data[index*15]? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller:
+                                          controllersList[index * 15 + 12],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+12].text!=data[index*15+12]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 12],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: controllersList[index*15].text!=data[index*15]? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller:
+                                          controllersList[index * 15 + 13],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+13].text!=data[index*15+13]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 13],
-                                )),
-                                DataCell(TextField(
-                                  controller: controllersList[index * 15 + 14],
+                                DataCell(GestureDetector(
+                                  child: Container(
+                                    color: controllersList[index*15].text!=data[index*15]? Colors.white : red.contains(index*15) ? Colors.red : Colors.grey,                                  child: TextField(
+                                      controller:
+                                          controllersList[index * 15 + 14],
+                                    ),
+                                  ),
+                                  onTapCancel: (){
+                                    setState(() {
+                                      if(controllersList[index*15+14].text!=data[index*15+14]){
+                                        isWhite[index]=true;
+                                      }
+                                    });
+                                  },
                                 )),
                               ])),
                     ),
@@ -367,7 +718,7 @@ class _MainScreenState extends State<MainScreen> {
                     Text('${company[i]}: ${companyApp[i]}'),
                 ],
               ),
-            ), */
+            ),*/
           ],
         ),
       ),

@@ -40,6 +40,7 @@ dependencies:
   xml: any
   flutter_app_name: ^0.1.1
   motion_toast: ^2.6.6
+  mysql1: ^0.20.0
 
 dev_dependencies:
   flutter_test:
